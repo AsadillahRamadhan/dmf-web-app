@@ -5,6 +5,9 @@ import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 import { User, Settings, Bell, Shield, LogOut, Moon } from 'lucide-react';
 import { useState } from 'react';
+import { api } from '../util/api';
+import LoadingPage from './LoadingPage';
+import { ErrorPage } from './ErrorPage';
 
 interface UserData {
   name: string;
@@ -24,14 +27,47 @@ export function UserPage() {
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const userData: UserData = JSON.parse(localStorage.getItem('user_data') || '{}');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   
-  const onLogout = () => {
+  const onLogout = async () => {
+    setIsLoading(true);
+    try {
+      console.log(`Bearer ${localStorage.getItem('access_token')}`);
+      await api.post('/logout', {}, {
+        headers: {
+        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+      }
+      })
+    } catch (e: any) {
+      if (!e.status){
+        setError('There is error with the server');
+      } else {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("device_id");
+        localStorage.removeItem("user_data");
+        window.location.reload();
+        setError(e.response.data.message);
+      }
+      setIsLoading(false);
+      return;
+    }
     localStorage.removeItem("access_token");
+    localStorage.removeItem("device_id");
+    localStorage.removeItem("user_data");
+    setIsLoading(false);
     window.location.reload();
   };
 
+  if(error != '') {
+    return (
+      <ErrorPage onRetry={onLogout} errorType={'server'} errorMessage={error} />
+    );
+  }
+
   return (
     <div className="space-y-4">
+      { isLoading && <LoadingPage/> }
       <div className="flex items-center gap-2 mb-4">
         <User className="w-5 h-5" />
         <h2>Profil User</h2>

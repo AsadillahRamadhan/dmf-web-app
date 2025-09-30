@@ -4,9 +4,11 @@ import { Switch } from './ui/switch';
 import { Badge } from './ui/badge';
 import { Label } from './ui/label';
 import { User, Thermometer, Gauge, RotateCw, RotateCcw } from 'lucide-react';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { api } from '../util/api';
 import { ErrorPage } from './ErrorPage';
+import LoadingPage from './LoadingPage';
+import io from 'socket.io-client';
 
 interface UserData {
   name: string;
@@ -18,6 +20,8 @@ interface HomePageProps {
   userData: UserData;
 }
 
+const socket = io.connect(import.meta.env.VITE_BACKEND_WEBSOCKET_URL);
+
 export function HomePage() {
   const userData: UserData = JSON.parse(localStorage.getItem('user_data') || '{}');
   const [isLoading, setIsLoading] = useState(false);
@@ -28,20 +32,28 @@ export function HomePage() {
   const [isEnabled, setIsEnabled] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
 
+  socket.on(`temperature/${localStorage.getItem('device_id')}`, (data: any) => {
+    setTemperature(data.text);
+  })
+
   const getTemperature = async () => {
     let curUser: any;
     try {
       setIsLoading(true);
       setError('');
-       curUser = await api.get('/temperatures/latest/11aef772-ae2e-4a79-8303-e981ad8748d4', {headers: {
+       curUser = await api.get(`/temperatures/latest/${localStorage.getItem('device_id')}`, {headers: {
         'Authorization': `Bearer ${localStorage.getItem('access_token')}`
       }});
       setTemperature(curUser.data.data.temperature);
       setIsLoading(false);
-    } catch (e) {
+    } catch (e: any) {
       if (!e.status){
         setError('There is error with the server');
       } else {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("device_id");
+        localStorage.removeItem("user_data");
+        window.location.reload();
         setError(e.response.data.message);
       }
       setIsLoading(false);
@@ -54,17 +66,21 @@ export function HomePage() {
     try {
       setIsLoading(true);
       setError('');
-      curUser = await api.get('/rpms/latest/11aef772-ae2e-4a79-8303-e981ad8748d4', {headers: {
+      curUser = await api.get(`/rpms/latest/${localStorage.getItem('device_id')}`, {headers: {
         'Authorization': `Bearer ${localStorage.getItem('access_token')}`
       }});
       setRpm(curUser.data.data.rpm);
       setIsClockwise(curUser.data.data.isClockwise == 1 ? true : false);
       setIsEnabled(curUser.data.data.isActive == 1 ? true : false);
       setIsLoading(false);
-    } catch (e) {
+    } catch (e: any) {
       if (!e.status){
         setError('There is error with the server');
       } else {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("device_id");
+        localStorage.removeItem("user_data");
+        window.location.reload();
         setError(e.response.data.message);
       }
       setIsLoading(false);
@@ -83,7 +99,7 @@ export function HomePage() {
       setError('');
       await api.post('/rpms', {
         user_id: userData.id,
-        device_id: '11aef772-ae2e-4a79-8303-e981ad8748d4',
+        device_id: localStorage.getItem('device_id'),
         rpm: dataChanged == 'rpm' ? rpmParam : rpm,
         is_clockwise: dataChanged == 'is_clockwise' ? isClockwiseParam : isClockwise,
         is_active: dataChanged == 'is_active' ? isEnabledParam : isEnabled
@@ -92,10 +108,14 @@ export function HomePage() {
       }});
       setIsLoading(false);
     }
-    catch (e) {
+    catch (e: any) {
       if (!e.status){
         setError('There is error with the server');
       } else {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("device_id");
+        localStorage.removeItem("user_data");
+        window.location.reload();
         setError(e.response.data.message);
       }
       setIsLoading(false);
@@ -125,9 +145,9 @@ export function HomePage() {
       <ErrorPage onRetry={handleRetry} errorType={'server'} errorMessage={error} />
     );
   }
-
   return (
     <div className="space-y-4">
+      { isLoading && <LoadingPage/> }
       {/* User Info Section */}
       <Card>
         <CardHeader className="pb-3">

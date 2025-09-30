@@ -2,6 +2,15 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 import { Label } from './ui/label';
 import { Separator } from './ui/separator';
 import { LogIn, Eye, EyeOff, User, Lock } from 'lucide-react';
@@ -29,6 +38,11 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isChooseDevice, setIsChooseDevice] = useState(false);
+  const [devices, setDevices] = useState([]);
+  const [loginCredentials, setLoginCredentials] = useState({data: {token: {token: ''}}});
+  const [currentUser, setCurrentUser] = useState({data: {user: {}}});
+  const [selectValue, setSelectValue] = useState("");
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -52,8 +66,9 @@ export function LoginForm() {
 
     let result: any;
     try {
-      result = await api.post('/login', formData);
-    } catch (e) {
+      result = await api.post('/login', formData)
+      setLoginCredentials(result);
+    } catch (e: any) {
       if (!e.status){
         setError('There is error with the server');
       } else {
@@ -63,14 +78,13 @@ export function LoginForm() {
       return;
     }
 
-    localStorage.setItem('access_token', result.data.token.token);
-
-    let curUser: any;
     try {
-       curUser = await api.get('/current-user', {headers: {
-        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-      }});
-    } catch (e) {
+      setCurrentUser(await api.get('/current-user', {
+        headers: {
+          'Authorization': `Bearer ${result.data.token.token}`
+        }
+      }));
+    } catch (e: any) {
       if (!e.status){
         setError('There is error with the server');
       } else {
@@ -80,13 +94,72 @@ export function LoginForm() {
       return;
     }
 
-    localStorage.setItem('user_data', JSON.stringify(curUser.data.user));
-   
+    let deviceRes: any;
+    try {
+      deviceRes = await api.get(`/devices`, {headers: {
+        'Authorization': `Bearer ${result.data.token.token}`
+      }});
+      setDevices(deviceRes.data.data.data);
+    } catch (e: any) {
+      if (!e.status){
+        setError('There is error with the server');
+      } else {
+        setError(e.response.data.message);
+      }
+      setIsLoading(false);
+      return;
+    }
+    setIsChooseDevice(true);
+    setIsLoading(false);
+  };
 
+  const handleSelectDevice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    if(selectValue == ""){
+      setIsLoading(false);
+      setError('The device not selected!');
+      return;
+    }
+
+    let device: any;
+    try {
+       device = await api.get(`/devices/${selectValue}`, {headers: {
+        'Authorization': `Bearer ${loginCredentials.data.token.token}`
+      }});
+    } catch (e: any) {
+      if (!e.status){
+        setError('There is error with the server');
+      } else {
+        setError(e.response.data.message);
+      }
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      await api.post(`/use-device`, { id: selectValue }, {headers: {
+        'Authorization': `Bearer ${loginCredentials.data.token.token}`
+      }});
+    } catch (e: any) {
+      if (!e.status){
+        setError('There is error with the server');
+      } else {
+        setError(e.response.data.message);
+      }
+      setIsLoading(false);
+      return;
+    }
+
+    localStorage.setItem('user_data', JSON.stringify(currentUser.data.user));
+    localStorage.setItem('access_token', loginCredentials.data.token.token);
+    localStorage.setItem('device_id', device.data.data.id);
 
     navigate("/home", { replace: true });
     setIsLoading(false);
-  };
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -110,7 +183,7 @@ export function LoginForm() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={!isChooseDevice ? handleSubmit : handleSelectDevice } className="space-y-4">
               {error && (
                 <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
                   <p className="text-sm text-destructive">{error}</p>
@@ -162,6 +235,29 @@ export function LoginForm() {
                   </button>
                 </div>
               </div>
+              
+              { isChooseDevice && (
+                <div className="space-y-2">
+                  <Label htmlFor="device">Select Device</Label>
+                  <Select
+                    name="device"
+                    value={selectValue}
+                    onValueChange={setSelectValue}
+                  >
+                    <SelectTrigger id="device" className="w-full">
+                      <SelectValue placeholder="Please select the device" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {devices.map((device: any) => (
+                        <SelectItem key={device.id} value={`${device.id}`}>
+                          {device.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              
 
               <Button 
                 type="submit" 

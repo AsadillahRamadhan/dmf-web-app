@@ -6,6 +6,7 @@ import { intervalToDuration, formatDuration } from 'date-fns';
 import { api } from '../util/api';
 import { id } from 'date-fns/locale';
 import { ErrorPage } from './ErrorPage';
+import LoadingPage from './LoadingPage';
 
 interface HistoryEntry {
   id: string;
@@ -36,7 +37,7 @@ export function HistoryPage() {
         try {
           setIsLoading(true);
           setError('');
-          const data = await api.get('/history/rpm/11aef772-ae2e-4a79-8303-e981ad8748d4', {headers: {
+          const data = await api.get(`/history/rpm/${localStorage.getItem('device_id')}`, {headers: {
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`
           }});
           setHistory(data.data.data.data);
@@ -45,6 +46,12 @@ export function HistoryPage() {
           if (!e.status){
             setError('There is error with the server');
           } else {
+            if(e.status == 401){
+              localStorage.removeItem("access_token");
+              localStorage.removeItem("device_id");
+              localStorage.removeItem("user_data");
+              window.location.reload();
+            }
             setError(e.response.data.message);
           }
           setIsLoading(false);
@@ -54,7 +61,7 @@ export function HistoryPage() {
         try {
           setIsLoading(true);
           setError('');
-          const data = await api.get('/history/temperature/11aef772-ae2e-4a79-8303-e981ad8748d4', {headers: {
+          const data = await api.get(`/history/temperature/${localStorage.getItem('device_id')}`, {headers: {
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`
           }});
           setHistory(data.data.data.data);
@@ -63,6 +70,10 @@ export function HistoryPage() {
           if (!e.status){
             setError('There is error with the server');
           } else {
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("device_id");
+            localStorage.removeItem("user_data");
+            window.location.reload();
             setError(e.response.data.message);
           }
           setIsLoading(false);
@@ -81,6 +92,7 @@ export function HistoryPage() {
 
   return (
     <div className="space-y-4">
+      { isLoading && <LoadingPage/> }
       <div className="flex items-center gap-2 mb-4">
         <Clock className="w-5 h-5" />
         <h2>Riwayat Operasi</h2>
