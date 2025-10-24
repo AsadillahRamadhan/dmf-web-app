@@ -20,7 +20,12 @@ interface HomePageProps {
   userData: UserData;
 }
 
-const socket = io.connect(import.meta.env.VITE_BACKEND_WEBSOCKET_URL);
+// let socket: any;
+  // try {
+  const socket = io.connect(import.meta.env.VITE_BACKEND_WEBSOCKET_URL);
+  // } catch (e) {
+  //   setError(`Can't connect through websocket!`);
+  // }
 
 export function HomePage() {
   const userData: UserData = JSON.parse(localStorage.getItem('user_data') || '{}');
@@ -31,9 +36,25 @@ export function HomePage() {
   const [error, setError] = useState('');
   const [isEnabled, setIsEnabled] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [mqttConnected, setMqttConnected] = useState(false);
+  const [isSecure, setIsSecure] = useState(false);
 
-  socket.on(`temperature/${localStorage.getItem('device_id')}`, (data: any) => {
+
+  socket.on(`${localStorage.getItem('device_id')}/temperature`, (data: any) => {
+    setMqttConnected(true);
     setTemperature(data.text);
+  })
+  socket.on(`${localStorage.getItem('device_id')}/rpm`, (data: any) => {
+    setMqttConnected(true);
+    setRpm(data.text);
+  })
+  socket.on(`${localStorage.getItem('device_id')}/motor_status`, (data: any) => {
+    setMqttConnected(true);
+    setIsEnabled(data.text == "0" ? false : true);
+  })
+   socket.on(`${localStorage.getItem('device_id')}/security_status`, (data: any) => {
+    setMqttConnected(true);
+    setIsSecure(data.text == "0" ? false : true);
   })
 
   const getTemperature = async () => {
@@ -220,14 +241,42 @@ export function HomePage() {
             <Switch
               id="enabled"
               checked={isEnabled}
-              onCheckedChange={ async () => { await setIsEnabled(!isEnabled); console.log(!isEnabled); updateRpmData({dataChanged: 'is_active', isEnabledParam: !isEnabled}) }}
+              onCheckedChange={ async () => { await setIsEnabled(!isEnabled); updateRpmData({dataChanged: 'is_active', isEnabledParam: !isEnabled}) }}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle>Connection Status</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="mqtt-status" className="flex items-center gap-2">
+              {/* <Switch className="w-4 h-4" /> */}
+              MQTT Status
+            </Label>
+            <Switch
+              id="mqtt-status" disabled
+              checked={mqttConnected}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="security-status" className="flex items-center gap-2">
+              {/* <Switch className="w-4 h-4" /> */}
+              Security Status
+            </Label>
+            <Switch
+              id="security-status" disabled
+              checked={isSecure}
             />
           </div>
         </CardContent>
       </Card>
 
       {/* Direction Control */}
-      <Card>
+      {/* <Card>
         <CardHeader className="pb-3">
           <CardTitle>Kontrol Arah Putaran</CardTitle>
         </CardHeader>
@@ -255,10 +304,10 @@ export function HomePage() {
             />
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* RPM Level Control */}
-      <Card>
+      {/* <Card>
         <CardHeader className="pb-3">
           <CardTitle>Pengaturan RPM</CardTitle>
         </CardHeader>
@@ -297,10 +346,10 @@ export function HomePage() {
             />
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Current Settings Summary */}
-      <Card className="bg-accent/50">
+      {/* <Card className="bg-accent/50">
         <CardHeader className="pb-3">
           <CardTitle>Pengaturan Saat Ini</CardTitle>
         </CardHeader>
@@ -318,7 +367,7 @@ export function HomePage() {
               </Badge>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 }

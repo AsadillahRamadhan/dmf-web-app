@@ -152,7 +152,8 @@ export function HistoryPage() {
               </Badge>
             </div>
           </CardHeader>
-          {entry.isActive == 1 && <CardContent className="space-y-3">
+          {
+          entry.isActive == 5 && <CardContent className="space-y-3">
             <div className="grid grid-cols-2 gap-4">
               <div className="flex items-center gap-2">
                 {entry.direction === 'clockwise' ? (
@@ -182,7 +183,8 @@ export function HistoryPage() {
                 Speed: {entry.rpm} RPM
               </div>
             </div>
-          </CardContent>}
+          </CardContent>
+          }
           
         </Card>
       ))}
