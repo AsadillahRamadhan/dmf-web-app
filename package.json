@@ -1,5 +1,6 @@
 {
       "name": "Hydrogen Booster Capacity - Web AppS",
+      "homepage": "https://hydrogenboostercapacity.com",
       "version": "0.1.0",
       "private": true,
       "dependencies": {
