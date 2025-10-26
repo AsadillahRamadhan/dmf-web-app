@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Switch } from './ui/switch';
 import { Badge } from './ui/badge';
 import { Label } from './ui/label';
-import { User, Thermometer, Gauge, RotateCw, RotateCcw } from 'lucide-react';
+import { User, Thermometer, Gauge, RotateCw, RotateCcw, Bolt, Zap } from 'lucide-react';
 import { useEffect } from 'react';
 import { api } from '../util/api';
 import { ErrorPage } from './ErrorPage';
@@ -35,27 +35,39 @@ export function HomePage() {
   const [isClockwise, setIsClockwise] = useState(true);
   const [error, setError] = useState('');
   const [isEnabled, setIsEnabled] = useState(false);
+  const [isCurrent, setIsCurrent] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [mqttConnected, setMqttConnected] = useState(false);
   const [isSecure, setIsSecure] = useState(false);
+  const [kwh, setKwh] = useState<{ value: string } | null>(null);
 
 
   socket.on(`${localStorage.getItem('device_id')}/temperature`, (data: any) => {
     setMqttConnected(true);
+    setIsCurrent(true);
     setTemperature(data.text);
   })
   socket.on(`${localStorage.getItem('device_id')}/rpm`, (data: any) => {
     setMqttConnected(true);
+    setIsCurrent(true);
     setRpm(data.text);
   })
   socket.on(`${localStorage.getItem('device_id')}/motor_status`, (data: any) => {
     setMqttConnected(true);
+    setIsCurrent(true);
     setIsEnabled(data.text == "0" ? false : true);
   })
-   socket.on(`${localStorage.getItem('device_id')}/security_status`, (data: any) => {
+  socket.on(`${localStorage.getItem('device_id')}/security_status`, (data: any) => {
     setMqttConnected(true);
+    setIsCurrent(true);
     setIsSecure(data.text == "0" ? false : true);
   })
+  socket.on(`${localStorage.getItem('device_id')}/kwh`, (data: any) => {
+    setMqttConnected(true);
+    setIsCurrent(true);
+    setKwh(data.text);
+  })
+  
 
   const getTemperature = async () => {
     let curUser: any;
@@ -197,7 +209,7 @@ export function HomePage() {
 
       {/* Temperature & RPM Display */}
       <div className="grid grid-cols-2 gap-4">
-        <Card>
+        <Card style={{ display:'none' }}>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2">
               <Thermometer className="w-5 h-5" />
@@ -207,7 +219,21 @@ export function HomePage() {
           <CardContent>
             <div className="text-center">
               <div className="text-2xl">{temperature}°C</div>
-              <div className="text-sm text-muted-foreground">Current</div>
+              <div className="text-sm text-muted-foreground">{isCurrent ? 'Current' : 'Last Active'}</div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5" />
+              kWh
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center">
+              <div className="text-2xl">{kwh?.value ? `${kwh.value}` : '0'} kWh</div>
+              <div className="text-sm text-muted-foreground">{isCurrent ? 'Current' : 'Last Active'}</div>
             </div>
           </CardContent>
         </Card>
@@ -222,7 +248,23 @@ export function HomePage() {
           <CardContent>
             <div className="text-center">
               <div className="text-2xl">{rpm} RPM</div>
-              <div className="text-sm text-muted-foreground">Current</div>
+              <div className="text-sm text-muted-foreground">{isCurrent ? 'Current' : 'Last Active'}</div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      <div>
+        <Card style={{ display: 'none' }}>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5" />
+              kWh
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center">
+              <div className="text-2xl">{kwh?.value ? `${kwh.value}` : '0'} kWh</div>
+              <div className="text-sm text-muted-foreground">{isCurrent ? 'Current' : 'Last Active'}</div>
             </div>
           </CardContent>
         </Card>
@@ -241,7 +283,7 @@ export function HomePage() {
             <Switch
               id="enabled"
               checked={isEnabled}
-              onCheckedChange={ async () => { await setIsEnabled(!isEnabled); updateRpmData({dataChanged: 'is_active', isEnabledParam: !isEnabled}) }}
+              onCheckedChange={ async () => { if (!mqttConnected){ return; }  await setIsEnabled(!isEnabled); updateRpmData({dataChanged: 'is_active', isEnabledParam: !isEnabled}) }}
             />
           </div>
         </CardContent>

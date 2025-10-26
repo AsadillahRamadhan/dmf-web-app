@@ -296,13 +296,13 @@ export function LoginForm() {
         </Card>
 
         {/* Demo credentials */}
-        <Card className="mt-4 bg-accent/30">
+        {/* <Card className="mt-4 bg-accent/30">
           <CardContent className="pt-4">
             <p className="text-sm text-muted-foreground text-center mb-2">
               Demo: Gunakan username dan password apapun untuk login
             </p>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
     </div>
   );
