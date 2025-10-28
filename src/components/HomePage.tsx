@@ -30,8 +30,8 @@ interface HomePageProps {
 export function HomePage() {
   const userData: UserData = JSON.parse(localStorage.getItem('user_data') || '{}');
   const [isLoading, setIsLoading] = useState(false);
-  const [temperature, setTemperature] = useState<{ value: number } | null>(null);
-  const [rpm, setRpm] = useState<{ value: number } | null>(null);
+  const [temperature, setTemperature] = useState(null);
+  const [rpm, setRpm] = useState(null);
   const [isClockwise, setIsClockwise] = useState(true);
   const [error, setError] = useState('');
   const [isEnabled, setIsEnabled] = useState(false);
@@ -83,10 +83,16 @@ export function HomePage() {
       if (!e.status){
         setError('There is error with the server');
       } else {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("device_id");
-        localStorage.removeItem("user_data");
-        window.location.reload();
+        if( e.status == 404){ 
+          setTemperature(0);
+          setIsLoading(false);
+          return;
+        } else if (e.status == 401) {
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("device_id");
+          localStorage.removeItem("user_data");
+          window.location.reload();
+        }
         setError(e.response.data.message);
       }
       setIsLoading(false);
@@ -110,10 +116,18 @@ export function HomePage() {
       if (!e.status){
         setError('There is error with the server');
       } else {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("device_id");
-        localStorage.removeItem("user_data");
-        window.location.reload();
+        if( e.status == 404){ 
+          setRpm(0);
+          setIsClockwise(true);
+          setIsEnabled(false);
+          setIsLoading(false);
+          return;
+        } else if (e.status == 401) {
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("device_id");
+          localStorage.removeItem("user_data");
+          window.location.reload();
+        }
         setError(e.response.data.message);
       }
       setIsLoading(false);
@@ -145,10 +159,12 @@ export function HomePage() {
       if (!e.status){
         setError('There is error with the server');
       } else {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("device_id");
-        localStorage.removeItem("user_data");
-        window.location.reload();
+        if (e.status == 401) {
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("device_id");
+          localStorage.removeItem("user_data");
+          window.location.reload();
+        }
         setError(e.response.data.message);
       }
       setIsLoading(false);

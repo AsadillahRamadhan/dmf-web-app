@@ -51,6 +51,10 @@ export function HistoryPage() {
               localStorage.removeItem("device_id");
               localStorage.removeItem("user_data");
               window.location.reload();
+            } else if (e.status == 404){
+              setHistory([]);
+              setIsLoading(false);
+              return;
             }
             setError(e.response.data.message);
           }
@@ -70,10 +74,16 @@ export function HistoryPage() {
           if (!e.status){
             setError('There is error with the server');
           } else {
-            localStorage.removeItem("access_token");
-            localStorage.removeItem("device_id");
-            localStorage.removeItem("user_data");
-            window.location.reload();
+            if(e.status == 401){
+              localStorage.removeItem("access_token");
+              localStorage.removeItem("device_id");
+              localStorage.removeItem("user_data");
+              window.location.reload();
+            } else if (e.status == 404){
+              setHistory([]);
+              setIsLoading(false);
+              return;
+            }
             setError(e.response.data.message);
           }
           setIsLoading(false);
