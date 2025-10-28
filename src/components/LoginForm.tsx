@@ -270,7 +270,7 @@ export function LoginForm() {
 
             <Separator className="my-6" />
 
-            <div className="text-center space-y-4">
+            {/* <div className="text-center space-y-4">
               <Button
                 variant="outline"
                 className="w-full"
@@ -291,7 +291,7 @@ export function LoginForm() {
                   Daftar sekarang
                 </button>
               </div>
-            </div>
+            </div> */}
           </CardContent>
         </Card>
 

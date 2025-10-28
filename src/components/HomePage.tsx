@@ -39,7 +39,7 @@ export function HomePage() {
   const [retryCount, setRetryCount] = useState(0);
   const [mqttConnected, setMqttConnected] = useState(false);
   const [isSecure, setIsSecure] = useState(false);
-  const [kwh, setKwh] = useState<{ value: string } | null>(null);
+  const [kwh, setKwh] = useState("0");
 
 
   socket.on(`${localStorage.getItem('device_id')}/temperature`, (data: any) => {
@@ -232,7 +232,7 @@ export function HomePage() {
           </CardHeader>
           <CardContent>
             <div className="text-center">
-              <div className="text-2xl">{kwh?.value ? `${kwh.value}` : '0'} kWh</div>
+              <div className="text-2xl">{kwh} kWh</div>
               <div className="text-sm text-muted-foreground">{isCurrent ? 'Current' : 'Last Active'}</div>
             </div>
           </CardContent>
