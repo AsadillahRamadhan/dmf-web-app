@@ -258,12 +258,12 @@ export function HomePage() {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2">
               <Gauge className="w-5 h-5" />
-              RPM
+              Intensity
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-center">
-              <div className="text-2xl">{rpm} RPM</div>
+              <div className="text-2xl">{rpm}</div>
               <div className="text-sm text-muted-foreground">{isCurrent ? 'Current' : 'Last Active'}</div>
             </div>
           </CardContent>
